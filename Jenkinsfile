@@ -12,7 +12,7 @@ pipeline {
             steps {
                 sh 'python --version'
                 sh 'pip install -r requirements.txt'
-                sh 'python -m pytest'  # Add tests if needed
+                sh 'python -m pytest'
             }
         }
 
@@ -36,7 +36,6 @@ pipeline {
     post {
         success {
             echo 'Pipeline succeeded!'
-            // Add Slack/email notification here
         }
         failure {
             echo 'Pipeline failed!'
