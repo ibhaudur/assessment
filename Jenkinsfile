@@ -9,13 +9,18 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
-            steps {
-                sh 'python --version'
-                sh 'pip install -r requirements.txt'
-                sh 'python -m pytest'
-            }
+      stage('Build & Test') {
+    agent {
+        docker {
+            image 'python:3.12'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
+    }
+    steps {
+        sh 'python --version'
+        sh 'pip install -r requirements.txt'
+    }
+}
 
         stage('Build Docker Image') {
             steps {
