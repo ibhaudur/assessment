@@ -12,11 +12,11 @@ pipeline {
             steps {
                 echo '🔧 Running Python container for install and test...'
                 sh '''
-                    docker run --rm -v $PWD:/app -w /app python:3.12 sh -c "
-                        python --version &&
-                        pip install -r requirements.txt &&
-                        python app.py
-                    "
+                    docker run --rm \
+                        -v "$WORKSPACE":/app \
+                        -w /app \
+                        python:3.12 \
+                        sh -c "python --version && pip install -r requirements.txt && python app.py"
                 '''
             }
         }
