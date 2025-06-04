@@ -1,57 +1,45 @@
 pipeline {
     agent any
 
-    environment {
-        IMAGE_NAME = 'python-app'
-        CONTAINER_NAME = 'python-app-container'
-        PORT = '5000'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git 'https://github.com/ibhaudur/assessment.git'
             }
         }
 
-        stage('Install & Test') {
+        stage('Build & Test') {
             steps {
-                echo '🔧 Running Python container for install and test...'
-                sh '''
-                docker run --rm -v $PWD:/app -w /app python:3.12 sh -c "
-                    python --version &&
-                    pip install -r requirements.txt &&
-                    python app.py
-                "
-                '''
+                sh 'python --version'
+                sh 'pip install -r requirements.txt'
+                sh 'python -m pytest'  # Add tests if needed
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '🐳 Building Docker image...'
-                sh 'docker build -t $IMAGE_NAME .'
+                script {
+                    docker.build("assessment:${env.BUILD_ID}")
+                }
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Run Container') {
             steps {
-                echo '🚀 Running Docker container...'
-                sh '''
-                docker stop $CONTAINER_NAME || true
-                docker rm $CONTAINER_NAME || true
-                docker run -d --name $CONTAINER_NAME -p $PORT:$PORT $IMAGE_NAME
-                '''
+                script {
+                    docker.image("assessment:${env.BUILD_ID}").run('-p 5000:5000 --name python-app --rm')
+                }
             }
         }
     }
 
     post {
         success {
-            echo '✅ CI/CD pipeline completed successfully!'
+            echo 'Pipeline succeeded!'
+            // Add Slack/email notification here
         }
         failure {
-            echo '❌ CI/CD pipeline failed!'
+            echo 'Pipeline failed!'
         }
     }
 }
