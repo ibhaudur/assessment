@@ -2,36 +2,39 @@ pipeline {
     agent any
 
     environment {
-        APP_ENV = 'development'
+        IMAGE_NAME = 'python-app'
+        CONTAINER_NAME = 'python-app-container'
+        PORT = '5000'
     }
 
     stages {
         stage('Install & Test') {
             steps {
-                script {
-                    docker.image('python:3.12').inside {
-                        sh 'python --version'
-                        sh 'pip install -r requirements.txt'
-                        sh 'python app.py'
-                    }
-                }
+                echo '🔧 Running Python container for install and test...'
+                sh '''
+                    docker run --rm -v $PWD:/app -w /app python:3.12 sh -c "
+                        python --version &&
+                        pip install -r requirements.txt &&
+                        python app.py
+                    "
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo '🐳 Building Docker image...'
-                sh 'docker build -t python-app .'
+                sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
         stage('Run Docker Container') {
             steps {
-                echo '▶️ Running Docker container...'
+                echo '🚀 Running Docker container...'
                 sh '''
-                    docker stop python-app-container || true
-                    docker rm python-app-container || true
-                    docker run -d --name python-app-container -p 5000:5000 python-app
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+                    docker run -d --name $CONTAINER_NAME -p $PORT:$PORT $IMAGE_NAME
                 '''
             }
         }
@@ -39,10 +42,10 @@ pipeline {
 
     post {
         success {
-            echo '✅ Build completed successfully!'
+            echo '✅ CI/CD pipeline completed successfully!'
         }
         failure {
-            echo '❌ Build failed!'
+            echo '❌ CI/CD pipeline failed!'
         }
     }
 }
